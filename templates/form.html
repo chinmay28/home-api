@@ -3,32 +3,58 @@
 <head>
     <title>Home API</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        #jsonError {
+            color: white;
+            background: crimson;
+            padding: 0.5em;
+            margin-top: 0.5em;
+            margin-bottom: 1em;
+            display: none;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>🏠 Home API</h1>
 
-        <form method="post" action="/submit" class="form" id="kvForm">
-            <input type="text" name="key" placeholder="Enter key" required id="keyField">
-            <input type="text" name="value" placeholder="Enter value" required id="valueField">
-            <button type="submit">Save</button>
-            <button type="button" onclick="resetForm()">New</button>
+        <form method="post" action="/submit" id="kvForm">
+            <div class="form-group">
+                <label for="keyField">Key</label>
+                <input type="text" name="key" id="keyField" placeholder="Enter key" required>
+            </div>
+
+            <div class="form-group">
+                <label for="valueField">Value</label>
+                <textarea name="value" id="valueField" placeholder="Enter value" rows="10" required></textarea>
+                <label style="margin-top: 0.5em;">
+                    <input type="checkbox" id="jsonToggle" onchange="toggleJson()"> Interpret as JSON
+                </label>
+                <div id="jsonError"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit">💾 Save</button>
+                <button type="button" onclick="resetForm()">➕ New</button>
+            </div>
         </form>
 
-        <input type="text" id="searchBox" placeholder="Search..." oninput="liveSearch()" />
+        <input type="text" id="searchBox" placeholder="🔍 Search..." oninput="liveSearch()" />
 
         <h2>Stored Keys</h2>
         <table id="kvTable">
             <thead>
-                <tr><th>Key</th><th>Value</th><th>Actions</th></tr>
+                <tr><th>Key</th><th>Value</th><th>Updated</th><th>Actions</th></tr>
             </thead>
             <tbody id="kvBody">
-                {% for key, value in data %}
+                {% for key, value, updated in data %}
                 <tr>
                     <td>{{ key }}</td>
-                    <td>{{ value }}</td>
+                    <td style="white-space: pre-wrap;">{{ value }}</td>
+                    <td>{{ updated | datetime_human }}</td>
                     <td>
-                        <form method="post" action="/delete" style="display:inline;" onsubmit="return confirm('Delete {{ key }}?');">
+                        <form method="post" action="/delete" onsubmit="return confirm('Delete {{ key }}?');" style="display:inline;">
                             <input type="hidden" name="key" value="{{ key }}">
                             <button type="submit">🗑️</button>
                         </form>
@@ -45,19 +71,68 @@
     </div>
 
     <script>
+        function toggleJson() {
+            const isJson = document.getElementById('jsonToggle').checked;
+            const textarea = document.getElementById('valueField');
+            if (isJson) {
+                try {
+                    const formatted = JSON.stringify(JSON.parse(textarea.value), null, 2);
+                    textarea.value = formatted;
+                    textarea.style.fontFamily = 'monospace';
+                } catch (err) {}
+            } else {
+                textarea.style.fontFamily = '';
+            }
+        }
+
         function fillForm(button) {
             const key = button.getAttribute('data-key');
             const value = button.getAttribute('data-value');
+            const textarea = document.getElementById('valueField');
+
             document.getElementById('keyField').value = key;
-            document.getElementById('valueField').value = value;
+            textarea.value = value;
             document.getElementById('keyField').readOnly = true;
+
+            try {
+                const json = JSON.parse(value);
+                document.getElementById('jsonToggle').checked = true;
+                textarea.value = JSON.stringify(json, null, 2);
+                textarea.style.fontFamily = 'monospace';
+            } catch {
+                document.getElementById('jsonToggle').checked = false;
+                textarea.style.fontFamily = '';
+            }
         }
 
         function resetForm() {
             document.getElementById('keyField').value = '';
             document.getElementById('valueField').value = '';
             document.getElementById('keyField').readOnly = false;
+            document.getElementById('jsonError').style.display = 'none';
+            document.getElementById('jsonToggle').checked = false;
+            document.getElementById('valueField').style.fontFamily = '';
         }
+
+        document.getElementById('kvForm').addEventListener('submit', function (e) {
+            const isJson = document.getElementById('jsonToggle').checked;
+            const textarea = document.getElementById('valueField');
+            const errorBox = document.getElementById('jsonError');
+
+            if (isJson) {
+                try {
+                    const parsed = JSON.parse(textarea.value);
+                    textarea.value = JSON.stringify(parsed, null, 2);
+                    errorBox.style.display = 'none';
+                } catch (err) {
+                    errorBox.textContent = 'Invalid JSON: ' + err.message;
+                    errorBox.style.display = 'block';
+                    e.preventDefault();
+                }
+            } else {
+                errorBox.style.display = 'none';
+            }
+        });
 
         async function liveSearch() {
             const q = document.getElementById('searchBox').value;
@@ -65,13 +140,14 @@
             const rows = await res.json();
             const body = document.getElementById('kvBody');
             body.innerHTML = '';
-            for (const [key, value] of rows) {
+            for (const [key, value, updated] of rows) {
                 body.innerHTML += `
                     <tr>
                         <td>${key}</td>
-                        <td>${value}</td>
+                        <td style="white-space: pre-wrap;">${value}</td>
+                        <td>${new Date(updated * 1000).toLocaleString()}</td>
                         <td>
-                            <form method="post" action="/delete" style="display:inline;" onsubmit="return confirm('Delete ${key}?');">
+                            <form method="post" action="/delete" onsubmit="return confirm('Delete ${key}?');" style="display:inline;">
                                 <input type="hidden" name="key" value="${key}">
                                 <button type="submit">🗑️</button>
                             </form>

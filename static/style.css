@@ -1,46 +1,73 @@
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f6f8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9fafb;
     margin: 0;
     padding: 0;
+    color: #333;
 }
 
 .container {
-    max-width: 700px;
-    margin: 3em auto;
-    background: white;
+    max-width: 750px;
+    margin: 2em auto;
+    background-color: #ffffff;
     padding: 2em;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
 }
 
 h1, h2 {
     text-align: center;
-    color: #333;
+    color: #222;
+    margin-bottom: 1em;
 }
 
-.form {
+.form-group {
+    margin-bottom: 1.5em;
+}
+
+label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5em;
+    color: #555;
+}
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 0.75em;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: 'Segoe UI', sans-serif;
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    border-color: #0077cc;
+    outline: none;
+}
+
+textarea {
+    resize: vertical;
+    font-family: monospace;
+}
+
+.form-actions {
     display: flex;
     gap: 1em;
-    margin-bottom: 1.5em;
-    justify-content: center;
-}
-
-input[type=\"text\"] {
-    padding: 0.5em;
-    font-size: 1em;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    width: 40%;
 }
 
 button {
-    padding: 0.5em 1em;
+    padding: 0.6em 1.2em;
     background-color: #0077cc;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: 600;
 }
 
 button:hover {
@@ -49,10 +76,10 @@ button:hover {
 
 #searchBox {
     display: block;
-    margin: 0 auto 1.5em auto;
-    padding: 0.5em;
+    margin: 2em auto 1.5em auto;
+    padding: 0.75em;
     width: 60%;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid #ccc;
     font-size: 1em;
 }
@@ -60,10 +87,31 @@ button:hover {
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 2em;
 }
 
 th, td {
     text-align: left;
-    padding: 0.75em;
-    border-bottom: 1px solid #ddd;
+    padding: 0.85em;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
+
+th {
+    background-color: #f2f4f6;
+    font-weight: 600;
+}
+
+td form,
+td button {
+    display: inline;
+}
+
+a {
+    color: #0077cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
