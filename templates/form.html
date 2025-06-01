@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key-Value Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🗃️ Key-Value Store</h1>
+        <form method="post" action="/submit" class="form">
+            <input type="text" name="key" placeholder="Enter key" required>
+            <input type="text" name="value" placeholder="Enter value" required>
+            <button type="submit">Save</button>
+        </form>
+
+        <input type="text" id="searchBox" placeholder="Search..." oninput="liveSearch()" />
+
+        <h2>Stored Keys</h2>
+        <table id="kvTable">
+            <thead>
+                <tr><th>Key</th><th>Value</th><th>Action</th></tr>
+            </thead>
+            <tbody id="kvBody">
+                {% for key, value in data %}
+                <tr>
+                    <td>{{ key }}</td>
+                    <td>{{ value }}</td>
+                    <td>
+                        <form method="post" action="/delete" onsubmit="return confirm('Delete {{ key }}?');">
+                            <input type="hidden" name="key" value="{{ key }}">
+                            <button type="submit">🗑️</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script>
+        async function liveSearch() {
+            const q = document.getElementById('searchBox').value;
+            const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+            const rows = await res.json();
+            const body = document.getElementById('kvBody');
+            body.innerHTML = '';
+            for (const [key, value] of rows) {
+                body.innerHTML += `
+                    <tr>
+                        <td>${key}</td>
+                        <td>${value}</td>
+                        <td>
+                            <form method="post" action="/delete" onsubmit="return confirm('Delete ${key}?');">
+                                <input type="hidden" name="key" value="${key}">
+                                <button type="submit">🗑️</button>
+                            </form>
+                        </td>
+                    </tr>`;
+            }
+        }
+    </script>
+</body>
+</html>
