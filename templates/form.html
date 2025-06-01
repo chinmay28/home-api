@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Key-Value Store</title>
+    <title>Home API</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🗃️ Key-Value Store</h1>
-        <form method="post" action="/submit" class="form">
-            <input type="text" name="key" placeholder="Enter key" required>
-            <input type="text" name="value" placeholder="Enter value" required>
+        <h1>🏠 Home API</h1>
+
+        <form method="post" action="/submit" class="form" id="kvForm">
+            <input type="text" name="key" placeholder="Enter key" required id="keyField">
+            <input type="text" name="value" placeholder="Enter value" required id="valueField">
             <button type="submit">Save</button>
+            <button type="button" onclick="resetForm()">New</button>
         </form>
 
         <input type="text" id="searchBox" placeholder="Search..." oninput="liveSearch()" />
@@ -18,7 +20,7 @@
         <h2>Stored Keys</h2>
         <table id="kvTable">
             <thead>
-                <tr><th>Key</th><th>Value</th><th>Action</th></tr>
+                <tr><th>Key</th><th>Value</th><th>Actions</th></tr>
             </thead>
             <tbody id="kvBody">
                 {% for key, value in data %}
@@ -26,17 +28,37 @@
                     <td>{{ key }}</td>
                     <td>{{ value }}</td>
                     <td>
-                        <form method="post" action="/delete" onsubmit="return confirm('Delete {{ key }}?');">
+                        <form method="post" action="/delete" style="display:inline;" onsubmit="return confirm('Delete {{ key }}?');">
                             <input type="hidden" name="key" value="{{ key }}">
                             <button type="submit">🗑️</button>
                         </form>
+                        <button type="button" data-key="{{ key }}" data-value="{{ value }}" onclick="fillForm(this)">✏️</button>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <p style="text-align:center; margin-top: 2em;">
+            <a href="/stats">📊 View Stats</a>
+        </p>
     </div>
+
     <script>
+        function fillForm(button) {
+            const key = button.getAttribute('data-key');
+            const value = button.getAttribute('data-value');
+            document.getElementById('keyField').value = key;
+            document.getElementById('valueField').value = value;
+            document.getElementById('keyField').readOnly = true;
+        }
+
+        function resetForm() {
+            document.getElementById('keyField').value = '';
+            document.getElementById('valueField').value = '';
+            document.getElementById('keyField').readOnly = false;
+        }
+
         async function liveSearch() {
             const q = document.getElementById('searchBox').value;
             const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
@@ -49,10 +71,11 @@
                         <td>${key}</td>
                         <td>${value}</td>
                         <td>
-                            <form method="post" action="/delete" onsubmit="return confirm('Delete ${key}?');">
+                            <form method="post" action="/delete" style="display:inline;" onsubmit="return confirm('Delete ${key}?');">
                                 <input type="hidden" name="key" value="${key}">
                                 <button type="submit">🗑️</button>
                             </form>
+                            <button type="button" data-key="${key}" data-value="${value}" onclick="fillForm(this)">✏️</button>
                         </td>
                     </tr>`;
             }

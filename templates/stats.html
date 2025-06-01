@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home API – Statistics</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Home API Statistics</h1>
+
+        <h2>Request Count by Host</h2>
+        <table>
+            <thead>
+                <tr><th>Host</th><th>Requests</th></tr>
+            </thead>
+            <tbody>
+                {% for host, count in hosts %}
+                <tr><td>{{ host }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Uptime</h2>
+        <p>{{ uptime }} seconds</p>
+
+        <h2>Stats Since</h2>
+        <p>{{ since | datetime_human }}</p>
+
+        <p style="text-align:center;">
+            <a href="/">⬅ Back to Home API</a>
+        </p>
+    </div>
+</body>
+</html>
