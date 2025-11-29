@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Form, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 import sqlite3
 import time
+import json
 from datetime import datetime
 from collections import defaultdict
 
@@ -12,11 +14,11 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Jinja2 filter for datetime formatting
 def datetime_format(timestamp):
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 templates.env.filters["datetime"] = datetime_format
+
 def datetime_human(timestamp):
     delta = int(time.time() - timestamp)
     days, rem = divmod(delta, 86400)
@@ -64,7 +66,10 @@ async def read_form(request: Request):
     return templates.TemplateResponse("form.html", {"request": request, "data": rows})
 
 @app.post("/submit")
-async def submit_form(request: Request, key: str = Form(...), value: str = Form(...)):
+async def submit_form(request: Request):
+    form = await request.form()
+    key = form.get("key")
+    value = form.get("value")
     host = request.client.host
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("REPLACE INTO kv (key, value, updated) VALUES (?, ?, strftime('%s','now'))", (key, value))
@@ -76,7 +81,7 @@ async def submit_form(request: Request, key: str = Form(...), value: str = Form(
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/delete")
-async def delete_form(key: str = Form(...)):
+async def delete_form(key: str = Request):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("DELETE FROM kv WHERE key = ?", (key,))
     return RedirectResponse(url="/", status_code=303)
@@ -101,17 +106,21 @@ async def get_value(key: str, request: Request):
             return {"key": key, "value": row[0]}
         raise HTTPException(status_code=404, detail="Key not found")
 
+class KVBody(BaseModel):
+    value: dict
+
 @app.post("/api/{key}")
-async def set_value(key: str, value: str, request: Request):
+async def set_value(key: str, payload: KVBody, request: Request):
     host = request.client.host
+    value_str = json.dumps(payload.value)
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("REPLACE INTO kv (key, value, updated) VALUES (?, ?, strftime('%s','now'))", (key, value))
+        conn.execute("REPLACE INTO kv (key, value, updated) VALUES (?, ?, strftime('%s','now'))", (key, value_str))
         conn.execute(
             "INSERT INTO stats (host, count) VALUES (?, 1) "
             "ON CONFLICT(host) DO UPDATE SET count = count + 1",
             (host,)
         )
-    return {"key": key, "value": value}
+    return {"key": key, "value": payload.value}
 
 @app.delete("/api/{key}")
 async def delete_value(key: str):
