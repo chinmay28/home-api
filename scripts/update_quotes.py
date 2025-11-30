@@ -18,11 +18,11 @@ def main():
         except:
             quotes[t] = "N/A"
 
-    quotes["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    quotes["timestamp"] = datetime.now().strftime("%m/%d %H:%M:%S")
 
     pprint.pprint(quotes)
     url = "http://127.0.0.1:8000/api/minion-quotes"
-    response = requests.post(url, json=quotes)
+    response = requests.post(url, json={"value": quotes})
     pprint.pprint(response.status_code)
     pprint.pprint(response.json())
 
