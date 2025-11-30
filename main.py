@@ -132,14 +132,25 @@ async def get_value(key: str, request: Request):
     host = request.client.host
     with sqlite3.connect(DB_PATH) as conn:
         row = conn.execute("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
-        if row:
-            conn.execute(
-                "INSERT INTO stats (host, count) VALUES (?, 1) "
-                "ON CONFLICT(host) DO UPDATE SET count = count + 1",
-                (host,)
-            )
-            return {"key": key, "value": row[0]}
-        raise HTTPException(status_code=404, detail="Key not found")
+        if not row:
+            raise HTTPException(status_code=404, detail="Key not found")
+
+        # bump stats
+        conn.execute(
+            "INSERT INTO stats (host, count) VALUES (?, 1) "
+            "ON CONFLICT(host) DO UPDATE SET count = count + 1",
+            (host,)
+        )
+
+        raw_value = row[0]
+        # Try to decode JSON; if it fails, just return the raw string
+        try:
+            parsed = json.loads(raw_value)
+        except (TypeError, json.JSONDecodeError):
+            parsed = raw_value
+
+        return {"key": key, "value": parsed}
+
 
 class KVBody(BaseModel):
     value: dict
